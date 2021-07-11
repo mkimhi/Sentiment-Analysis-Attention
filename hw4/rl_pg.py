@@ -28,13 +28,18 @@ class PolicyNet(nn.Module):
 
         # TODO: Implement a simple neural net to approximate the policy.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        hidden = [in_features,32,64,out_actions] #change in need to
+        layer = []
+        for i in range(len(hidden)-1):
+            layer.append(torch.nn.Linear(hidden[i], hidden[i+1]))
+            layer.append(torch.nn.ReLU())
+        self.model = torch.nn.Sequential(*layer)
         # ========================
 
     def forward(self, x):
         # TODO: Implement a simple neural net to approximate the policy.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        action_scores = self.model(x)
         # ========================
         return action_scores
 
@@ -49,7 +54,9 @@ class PolicyNet(nn.Module):
         """
         # TODO: Implement according to docstring.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        n_features = env.observation_space.shape[0]
+        n_actions = env.action_space.n
+        net = PolicyNet(n_features,n_actions , **kw)
         # ========================
         return net.to(device)
 
@@ -87,9 +94,11 @@ class PolicyAgent(object):
         #  Generate the distribution as described above.
         #  Notice that you should use p_net for *inference* only.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        with torch.no_grad():
+            #self.p_net.eval()
+            scores = self.p_net(self.curr_state) #tensor [n_actions]
+            actions_proba = torch.softmax(scores, dim=0)
         # ========================
-
         return actions_proba
 
     def step(self) -> Experience:
@@ -108,9 +117,16 @@ class PolicyAgent(object):
         #  - Update agent state.
         #  - Generate and return a new experience.
         # ====== YOUR CODE: ======
-
-        raise NotImplementedError()
-
+        #Q: why don't we put the next_state in buffer
+        #A: since we reset the buffer in terminal state, we can just sample in iter i the state at i+1
+        
+        #sample policy
+        action = torch.multinomial(self.current_action_distribution(), 1).item() 
+        #preform a step
+        next_state, reward, is_done, info = self.env.step(action)
+        next_state = torch.tensor(next_state).to(device=self.device, dtype=torch.float)
+        experience = Experience(self.curr_state, action, reward, is_done)
+        self.curr_state = next_state
         # ========================
         if is_done:
             self.reset()
@@ -136,7 +152,15 @@ class PolicyAgent(object):
             #  Create an agent and play the environment for one episode
             #  based on the policy encoded in p_net.
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            terminal = False
+            env.reset()
+            agent = cls(env=env, p_net=p_net, device=device)
+            
+            while not terminal:
+                n_steps += 1
+                experience = agent.step()
+                reward += experience.reward
+                terminal = experience.is_done
             # ========================
         return env, n_steps, reward
 

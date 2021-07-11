@@ -39,7 +39,11 @@ class Episode(object):
         #  Try to implement it in O(n) runtime, where n is the number of
         #  states. Hint: change the order.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        reward = 0
+        for experience in reversed(self.experiences):
+            reward = experience.reward + gamma * reward 
+            qvals.append(reward)
+        qvals = reversed(qvals)
         # ========================
         return qvals
 
@@ -88,7 +92,31 @@ class TrainBatch(object):
         #   - Calculate the q-values for states in each experience.
         #   - Construct a TrainBatch instance.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        states = []
+        actions = []
+        rewards = []
+        qvals = []
+
+        for episode in episodes:
+            qvals.extend(episode.calc_qvals(gamma))
+            rewards.append(episode.total_reward)
+            
+            for experiences in episode.experiences:
+                states.append(experiences.state)
+                actions.append(experiences.action)
+
+        states = torch.stack(states)
+        actions =  torch.LongTensor(actions)
+        rewards = torch.FloatTensor(rewards)
+        qvals = torch.FloatTensor(qvals)
+        train_batch = TrainBatch(states,actions,qvals,rewards)
+        
+        
+        """states_tensor = torch.stack(states)
+        train_batch = TrainBatch(states_tensor,
+                                 torch.LongTensor(actions),
+                                 torch.FloatTensor(qvals),
+                                 torch.FloatTensor(rewards))"""        
         # ========================
         return train_batch
 
@@ -147,7 +175,14 @@ class TrainBatchDataset(torch.utils.data.IterableDataset):
             #    by the agent.
             #  - Store Episodes in the curr_batch list.
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            one_exp = agent.step()
+            episode_reward += one_exp.reward
+            episode_experiences.append(one_exp)
+            if one_exp.is_done:
+                episode = Episode(episode_reward, episode_experiences)
+                curr_batch.append(episode)
+                episode_reward = 0.0
+                episode_experiences = []
             # ========================
             if len(curr_batch) == self.episode_batch_size:
                 yield tuple(curr_batch)
