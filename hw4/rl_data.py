@@ -41,9 +41,10 @@ class Episode(object):
         # ====== YOUR CODE: ======
         reward = 0
         for experience in reversed(self.experiences):
-            reward = experience.reward + gamma * reward 
-            qvals.append(reward)
-        qvals = reversed(qvals)
+            reward = experience.reward + gamma * reward
+            qvals.insert(0, reward)
+            #qvals.append(reward)
+        #qvals = reversed(qvals)
         # ========================
         return qvals
 
@@ -109,14 +110,7 @@ class TrainBatch(object):
         actions =  torch.LongTensor(actions)
         rewards = torch.FloatTensor(rewards)
         qvals = torch.FloatTensor(qvals)
-        train_batch = TrainBatch(states,actions,qvals,rewards)
-        
-        
-        """states_tensor = torch.stack(states)
-        train_batch = TrainBatch(states_tensor,
-                                 torch.LongTensor(actions),
-                                 torch.FloatTensor(qvals),
-                                 torch.FloatTensor(rewards))"""        
+        train_batch = TrainBatch(states,actions,qvals,rewards)   
         # ========================
         return train_batch
 

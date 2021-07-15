@@ -17,13 +17,9 @@ def part1_pg_hyperparams():
     # TODO: Tweak the hyperparameters if needed.
     #  You can also add new ones if you need them for your model's __init__.
     # ====== YOUR CODE: ======
-    """
-    hp = dict(batch_size=32,
-        gamma=0.999,
-        beta=0.5,
-        learn_rate=8e-3,
-        eps=1e-8)  
-    """
+    hp["batch_size"] = 64
+    hp["learn_rate"] = 5e-3
+    hp["eps"] = 2e-8
     # ========================
     return hp
 
