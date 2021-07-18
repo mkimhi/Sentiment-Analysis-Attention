@@ -19,25 +19,24 @@ class AACPolicyNet(nn.Module):
         #  Implement a dual-head neural net to approximate both the
         #  policy and value. You can have a common base part, or not.
         # ====== YOUR CODE: ======
-        layers = []
-        hidden = [in_features,64,32]
+        """layers = []
+        hidden = [in_features,32,16,16]
         for i in range(len(hidden)-1):
             layers.append(nn.Linear(hidden[i], hidden[i+1]))
             layers.append(nn.PReLU())
-        layers.append(nn.Linear(hidden[-1], out_actions))
-        self.policy_model = nn.Sequential(*layers)
+        #layers.append(nn.Linear(hidden[-1], out_actions))
+        self.shared = nn.Sequential(*layers)
 
-        layers = []
-        hidden = [in_features,64,32]
-        for i in range(len(hidden)-1):
-            layers.append(nn.Linear(hidden[i], hidden[i+1]))
-            layers.append(nn.PReLU())
-        layers.append(nn.Linear(hidden[-1], 1))            
-        self.values_model = nn.Sequential(*layers)
         
-        
-        
-        self.policy_sequence = nn.Sequential(
+        self.policy_model = nn.Sequential(
+            nn.Linear(hidden[-1], out_actions)
+        )
+
+        self.value_model = nn.Sequential(
+            nn.Dropout(0.4),
+            nn.Linear(hidden[-1], 1)
+        )"""
+        self.policy_model = nn.Sequential(
             nn.Linear(in_features, 16),
             nn.ReLU(),
             nn.Linear(16, 16),
@@ -47,7 +46,7 @@ class AACPolicyNet(nn.Module):
             nn.Linear(16, out_actions)
         )
        
-        self.value_sequence = nn.Sequential(
+        self.value_model = nn.Sequential(
             nn.Linear(in_features, 32),
             nn.ReLU(),
             nn.Linear(32, 32),
@@ -69,10 +68,9 @@ class AACPolicyNet(nn.Module):
         #  calculate both the action scores (policy) and the value of the
         #  given state.
         # ====== YOUR CODE: ======
-        #action_scores = self.policy_model(x)
-        #state_values = self.values_model(x)
-        action_scores = self.policy_sequence(x)
-        state_values = self.value_sequence(x)
+        #x = self.shared(x)
+        action_scores = self.policy_model(x)
+        state_values = self.value_model(x)
         # ========================
 
         return action_scores, state_values
