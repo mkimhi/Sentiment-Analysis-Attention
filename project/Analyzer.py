@@ -6,7 +6,7 @@ class SentimentAnalyzer(nn.Module):
         super().__init__()
         #embedding from index vector to euclidean based dense vector
         #require_grad set to false for embedding to be fixed and not trained
-        self.embedding = nn.embedding(vocab_dim, embedding_dim, require_grad=False)
+        self.embd = torch.nn.Embedding(vocab_dim, embedding_dim)
         #TODO: add pretrained weights to embedding layer
 
         #LSTM as recurrent layer
@@ -18,12 +18,16 @@ class SentimentAnalyzer(nn.Module):
     def forward(self, X):
         # X shape: (S, B) Note:batch dim is not first!
         
-        embedded = self.embedding(X) # embedded shape: (S, B, E)
+        embedded = self.embd(X) # embedded shape: (S, B, E)
+        B = embedded.shape[1]
+        E = embedded.shape[2]
         
         # Loop over (batch of) tokens in the sentence(s)
-        ht = None
+        ht = None #hidden state
+        ct = None #cell state        
         for xt in embedded:           # xt is (B, E)
-            yt, ht = self.rnn(xt, ht) # yt is (B, D_out)
+            xt = xt.reshape(1,B,E)
+            yt, ht = self.rnn(xt, ht) # yt is (B, D_out) #NOTE: we should use cell state for lstm
         
         # Class scores to log-probability
         yt_log_proba = self.log_softmax(yt)
