@@ -1,5 +1,5 @@
 import torch
-
+import time
 
 def train(model, optimizer, loss_fn, dataloader, max_epochs=100, max_batches=200):
     for epoch_idx in range(max_epochs):
