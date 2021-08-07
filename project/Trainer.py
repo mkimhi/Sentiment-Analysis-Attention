@@ -1,7 +1,7 @@
 import torch
 import time
 
-def train(model, optimizer, loss_fn, dataloader, max_epochs=100, max_batches=200):
+def train(model, optimizer, loss_fn, dataloader, max_epochs=100, max_batches=200, batch_size=4):
     for epoch_idx in range(max_epochs):
         total_loss, num_correct = 0, 0
         start_time = time.time()
@@ -28,4 +28,4 @@ def train(model, optimizer, loss_fn, dataloader, max_epochs=100, max_batches=200
             if batch_idx == max_batches-1:
                 break
                 
-        print(f"Epoch #{epoch_idx}, loss={total_loss /(max_batches):.3f}, accuracy={num_correct /(max_batches*BATCH_SIZE):.3f}, elapsed={time.time()-start_time:.1f} sec")
+        print(f"Epoch #{epoch_idx}, loss={total_loss /(max_batches):.3f}, accuracy={num_correct /(max_batches*batch_size):.3f}, elapsed={time.time()-start_time:.1f} sec")

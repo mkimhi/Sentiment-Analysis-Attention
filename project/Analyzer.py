@@ -30,6 +30,7 @@ class SentimentAnalyzer(nn.Module):
             yt, ht = self.rnn(xt, ht) # yt is (B, D_out) #NOTE: we should use cell state for lstm
         
         # Class scores to log-probability
+        yt = yt.reshape(B, yt.shape[-1])
         yt_log_proba = self.log_softmax(yt)
         
         return yt_log_proba
