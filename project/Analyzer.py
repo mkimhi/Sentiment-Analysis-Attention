@@ -1,21 +1,22 @@
 import torch
 import torch.nn as nn
+from Attention import AddAttention
 
 class SentimentAnalyzer(nn.Module):
-    def __init__(self, vocab_dim, embedding_dim, h_dim):
+    def __init__(self, vocab_dim, embedding_dim, h_dim, embedding_weights, layers=1):
         super().__init__()
         #embedding from index vector to euclidean based dense vector
         #require_grad set to false for embedding to be fixed and not trained
         self.embd = torch.nn.Embedding(vocab_dim, embedding_dim)
-        #TODO: add pretrained weights to embedding layer
+        self.embd.weight = nn.Parameter(embedding_weights, requires_grad=False)
 
         #LSTM as recurrent layer
-        self.rnn = nn.LSTM(embedding_dim, h_dim)
+        self.rnn = nn.LSTM(embedding_dim, h_dim, num_layers=layers)
 
         # To convert class scores to log-probability we will add log-softmax layer
         self.log_softmax = nn.LogSoftmax(dim=1)
 
-    def forward(self, X):
+    def forward(self, X, h_prev=None):
         # X shape: (S, B) Note:batch dim is not first!
         
         embedded = self.embd(X) # embedded shape: (S, B, E)
