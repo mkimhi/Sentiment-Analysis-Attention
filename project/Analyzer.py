@@ -64,10 +64,10 @@ class AttentionAnalyzer(nn.Module):
         self.embd.weight = nn.Parameter(embedding_weights, requires_grad=False)
 
         #GRU as recurrent layer TODO: make this modular
-        self.rnn = nn.GRU(embedding_dim + 2*layers*h_dim, h_dim, num_layers=layers, bidirectional=bidirec)
+        self.rnn = nn.GRU(embedding_dim, h_dim, num_layers=layers, bidirectional=bidirec)
         
         #We will use the implemented attention
-        self.attn = AddAttention(h_dim, h_dim, h_dim, h_dim)
+        self.attn = AddAttention(2*h_dim, 2*h_dim, 2*h_dim, 2*h_dim)
         
         self.sentiment = nn.Linear(2*h_dim, out_dim)
         # To convert class scores to log-probability we will add log-softmax layer
@@ -92,20 +92,19 @@ class AttentionAnalyzer(nn.Module):
         E = torch.tensor([embedded.shape[2]]).to(device)
         S = torch.tensor([X.shape[0]]).to(device)
         # Loop over (batch of) tokens in the sentence(s)
-        ht = torch.zeros(self.L,B,self.H).to(device) #hidden state
         ht = None
         #ct = torch.zeros(B,self.H).to(device) #cell state        
         for xt in embedded:          # xt is (B, E) 
             xt = xt.reshape(1,B,E)
-            if ht is not None:
-                a = self.attn(ht,ht,ht, S) #note: should use sequence length without padding 
-                a = a.reshape(1,B,2*self.L*self.H)
-            else:
-                a = torch.zeros(1,B,2*self.L*self.H).to(device)
-            xt = torch.cat((xt, a), dim=2) # (1, B, E + L*H)
+            #if ht is not None:
+            #    a = self.attn(ht,ht,ht, S) #note: should use sequence length without padding 
+            #    a = a.reshape(1,B,2*self.L*self.H)
+            #else:
+            #    a = torch.zeros(1,B,2*self.L*self.H).to(device)
+            #xt = torch.cat((xt, a), dim=2) # (1, B, E + L*H)
             yt, ht = self.rnn(xt, ht) # yt is (B, H_dim) #NOTE: we should use cell state for lstm (when using lstm)
-        
         # Class scores to log-probability
+        yt = self.attn(yt,yt,yt,None)
         yt = yt.reshape(B, yt.shape[-1])
         #yt.unsqueeze(0)
         yt = self.sentiment(yt) #yt is (B,D_out)
