@@ -1,46 +1,76 @@
 import torch
 import torch.nn as nn
+from torch.nn import functional
+from project.Attention import AddAttention
 
-class AddAttention(nn.Module): #satisfies e(k,q) = w@tanh(wk@k+wq@q)
-    def __init__(self, q_dim, k_dim, v_dim, h_dim):
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+
+class AttentionAnalyzer(nn.Module):
+    def __init__(self, vocab_dim, embedding_dim, h_dim, out_dim, embedding_weights, layers=2, bidirec=True):
         super().__init__()
-        self.wq = nn.Linear(q_dim, h_dim, bias=False)
-        self.wk = nn.Linear(k_dim, h_dim, bias=False)
-        self.w = nn.Linear(h_dim, 1, bias=False)
+        #embedding from index vector to euclidean based dense vector
+        #require_grad set to false for embedding to be fixed and not trained
+        self.embd = torch.nn.Embedding(vocab_dim, embedding_dim)
+        self.embd.weight = nn.Parameter(embedding_weights, requires_grad=False)
 
-    def forward(self, q:torch.Tensor, k:torch.Tensor, v:torch.Tensor, S:torch.Tensor=None):
-        # q: Queries tensor of shape (B, Q, q_dim)
-        # k: Keys tensor of shape (B, K, k_dim)
-        # v: Values tensor of shape (B, K, v_dim)
-        # S: Sequence lengths tensor of shape (B,). Specifies how many key/values to use in each example.
-
-        # Project queries to hidden dimension
-        # (B, Q, q_dim)  -> (B, Q, h_dim)  -> (B, Q, 1, h_dim)
-        w1 = (self.wq(q)).unsqueeze(2)
-
-        # Project keys to hidden dimension
-        # (B, K, k_dim) -> (B, K, h_dim) -> (B, 1, K, h_dim)
-        w2 = (self.wk(k)).unsqueeze(1)
-
-        # First layer of MLP: Use broadcast-addition to combine, then apply nonlinearity
-        # (B, Q, K, h_dim)
-        d1 = torch.tanh(w1 + w2)
-
-        # Second layer of MLP (vector product)
-        # (B, Q, K, h_dim) -> (B, Q, K, 1) -> (B, Q, K)
-        d2 = (self.w(d1)).squeeze(dim=-1)
-
-        # Mask d2 before applying softmax: indices greater then S are set to -inf to not affect softmax
-        if S is not None:
-            B, Q, K = d2.shape
-            idx = torch.arange(K).expand_as(d2)                 # (B,Q,K) containing indices 0..K-1
-            d2[idx >= S.reshape(1, 1, 1) ] = float('-inf')      # set selected to -inf to prevent influence on softmax
+        #GRU as recurrent layer TODO: make this modular
+        self.rnn = nn.GRU(embedding_dim, h_dim, num_layers=layers, bidirectional=bidirec)
         
+        #We will use the implemented attention
+        #self.attn = AddAttention(2*h_dim, 2*h_dim, 2*h_dim, 2*h_dim)
         
-        # Apply softmax on last dimension to get attention weights, per query
-        a = torch.softmax(d2, dim=-1)
+       
+        #attention martices
+        #self.att = nn.MultiheadAttention(embed_dim, num_heads, dropout=0.0, bias=True, add_bias_kv=False, add_zero_attn=False, kdim=None, vdim=None, batch_first=False, device=None, dtype=None)
+        self.W_s1 = nn.Linear(2*h_dim, 350)
+        self.W_s2 = nn.Linear(350, 30)
         
-        # Apply the attention weights to the values, per query
-        # (B, Q, K) * (B, K, v_dim) -> (B, Q, v_dim)
-        res = torch.bmm(a, v)
-        return res
+        self.sentiment = nn.Linear(30*2*h_dim, out_dim)
+        # To convert class scores to log-probability we will add log-softmax layer
+        self.log_softmax = nn.LogSoftmax(dim=1)
+        self.H = h_dim
+        self.L = layers
+        
+        #self.init_parameters()
+    def attention_net(self, lstm_output):
+        attn_weight_matrix = self.W_s2(torch.tanh(self.W_s1(lstm_output)))
+        attn_weight_matrix = attn_weight_matrix.permute(0, 2, 1)
+        attn_weight_matrix = functional.softmax(attn_weight_matrix, dim=2)
+
+        return attn_weight_matrix
+        
+    def init_parameters(self, init_low=-0.15, init_high=0.15):
+        """Initialize parameters. We usually use larger initial values for smaller models.
+        See http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf for a more
+        in-depth discussion.
+        """
+        for p in self.parameters():
+          p.data.uniform_(init_low, init_high)
+    
+    def forward(self, X):
+        # X shape: (S, B) Note:batch dim is not first!
+        embedded = self.embd(X) # embedded shape: (S, B, E)
+        B = torch.tensor([embedded.shape[1]]).to(device)
+        E = torch.tensor([embedded.shape[2]]).to(device)
+        S = torch.tensor([X.shape[0]]).to(device)
+        # Loop over (batch of) tokens in the sentence(s)
+        ht = None
+        #ct = torch.zeros(B,self.H).to(device) #cell state        
+        for xt in embedded:          # xt is (B, E) 
+            xt = xt.reshape(1,B,E)
+            yt, ht = self.rnn(xt, ht) # yt is (B, H_dim) #NOTE: we should use cell state for lstm (when using lstm)
+        # Class scores to log-probability
+        #yt = yt.reshape(B, yt.shape[-1])
+        yt = yt.permute(1,0,2)
+        
+        attn_weight = self.attention_net(yt)
+        yt = torch.bmm(attn_weight, yt)
+        
+        #yt.unsqueeze(0)
+        yt = self.sentiment(yt.view(-1, yt.shape[1]*yt.shape[2])) #yt is (B,D_out)
+        
+        yt_log_proba = self.log_softmax(yt)
+        
+        return yt_log_proba
