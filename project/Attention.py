@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional
-from project.Attention import AddAttention
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -58,9 +57,10 @@ class AttentionAnalyzer(nn.Module):
         # Loop over (batch of) tokens in the sentence(s)
         ht = None
         #ct = torch.zeros(B,self.H).to(device) #cell state        
-        for xt in embedded:          # xt is (B, E) 
-            xt = xt.reshape(1,B,E)
-            yt, ht = self.rnn(xt, ht) # yt is (B, H_dim) #NOTE: we should use cell state for lstm (when using lstm)
+        yt, ht = self.rnn(embedded, ht)
+        #for xt in embedded:          # xt is (B, E) 
+        #    xt = xt.reshape(1,B,E)
+        #    yt, ht = self.rnn(xt, ht) # yt is (B, H_dim) #NOTE: we should use cell state for lstm (when using lstm)
         # Class scores to log-probability
         #yt = yt.reshape(B, yt.shape[-1])
         yt = yt.permute(1,0,2)

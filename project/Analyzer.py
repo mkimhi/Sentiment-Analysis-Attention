@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional
-from project.Attention import AddAttention
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -40,13 +39,14 @@ class SentimentAnalyzer(nn.Module):
         # Loop over (batch of) tokens in the sentence(s)
         ht = torch.zeros(self.L,B,self.H).to(device) #hidden state
         ht = None
-        #ct = torch.zeros(B,self.H).to(device) #cell state        
-        for xt in embedded:           # xt is (B, E) 
-            xt = xt.reshape(1,B,E)
-            yt, ht = self.rnn(xt, ht) # yt is (B, H_dim) #NOTE: we should use cell state for lstm (when using lstm)
         
+        yt, ht = self.rnn(embedded, ht)
+        #ct = torch.zeros(B,self.H).to(device) #cell state        
+        #for xt in embedded:           # xt is (B, E) 
+        #    xt = xt.reshape(1,B,E)
+        #    yt, ht = self.rnn(xt, ht) # yt is (B, H_dim) #NOTE: we should use cell state for lstm (when using lstm)
         # Class scores to log-probability
-        yt = yt.reshape(B, yt.shape[-1])
+        yt = yt[-1].reshape(B, yt.shape[-1])
         #yt.unsqueeze(0)
         yt = self.sentiment(yt) #yt is (B,D_out)
         
