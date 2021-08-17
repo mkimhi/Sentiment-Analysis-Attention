@@ -31,11 +31,11 @@ class AddAttention(nn.Module): #satisfies e(k,q) = w@tanh(wk@k+wq@q)
         d2 = (self.w(d1)).squeeze(dim=-1)
 
         # Mask d2 before applying softmax: indices greater then S are set to -inf to not affect softmax
-        """if S is not None:
+        if S is not None:
             B, Q, K = d2.shape
             idx = torch.arange(K).expand_as(d2)                 # (B,Q,K) containing indices 0..K-1
             d2[idx >= S.reshape(1, 1, 1) ] = float('-inf')      # set selected to -inf to prevent influence on softmax
-        """
+        
         
         # Apply softmax on last dimension to get attention weights, per query
         a = torch.softmax(d2, dim=-1)

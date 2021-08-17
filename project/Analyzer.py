@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-
+from torch.nn import functional
 from project.Attention import AddAttention
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -67,16 +67,27 @@ class AttentionAnalyzer(nn.Module):
         self.rnn = nn.GRU(embedding_dim, h_dim, num_layers=layers, bidirectional=bidirec)
         
         #We will use the implemented attention
-        self.attn = AddAttention(2*h_dim, 2*h_dim, 2*h_dim, 2*h_dim)
+        #self.attn = AddAttention(2*h_dim, 2*h_dim, 2*h_dim, 2*h_dim)
         
-        self.sentiment = nn.Linear(2*h_dim, out_dim)
+       
+        #attention martices
+        self.W_s1 = nn.Linear(2*h_dim, 350)
+        self.W_s2 = nn.Linear(350, 30)
+        
+        self.sentiment = nn.Linear(30*2*h_dim, out_dim)
         # To convert class scores to log-probability we will add log-softmax layer
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.H = h_dim
         self.L = layers
         
         #self.init_parameters()
-    
+    def attention_net(self, lstm_output):
+        attn_weight_matrix = self.W_s2(torch.tanh(self.W_s1(lstm_output)))
+        attn_weight_matrix = attn_weight_matrix.permute(0, 2, 1)
+        attn_weight_matrix = functional.softmax(attn_weight_matrix, dim=2)
+
+        return attn_weight_matrix
+        
     def init_parameters(self, init_low=-0.15, init_high=0.15):
         """Initialize parameters. We usually use larger initial values for smaller models.
         See http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf for a more
@@ -104,10 +115,14 @@ class AttentionAnalyzer(nn.Module):
             #xt = torch.cat((xt, a), dim=2) # (1, B, E + L*H)
             yt, ht = self.rnn(xt, ht) # yt is (B, H_dim) #NOTE: we should use cell state for lstm (when using lstm)
         # Class scores to log-probability
-        yt = self.attn(yt,yt,yt,None)
-        yt = yt.reshape(B, yt.shape[-1])
+        #yt = yt.reshape(B, yt.shape[-1])
+        yt = yt.permute(1,0,2)
+        
+        attn_weight = self.attention_net(yt)
+        yt = torch.bmm(attn_weight, yt)
+        
         #yt.unsqueeze(0)
-        yt = self.sentiment(yt) #yt is (B,D_out)
+        yt = self.sentiment(yt.view(-1, yt.shape[1]*yt.shape[2])) #yt is (B,D_out)
         
         yt_log_proba = self.log_softmax(yt)
         
