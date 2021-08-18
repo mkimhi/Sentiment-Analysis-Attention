@@ -72,8 +72,8 @@ def train_and_eval(model,train_iter, valid_iter, optimizer, loss_fn =nn.NLLLoss(
             save_checkpoint = False
                
 
-    saved_state = torch.load(checkpoint_filename, map_location=device)
-    model.load_state_dict(saved_state['model_state'])
+    #saved_state = torch.load(checkpoint_filename, map_location=device)
+    #model.load_state_dict(saved_state['model_state'])
     
     return train_accur, test_accur
     #return total_epoch_loss/len(val_iter), total_epoch_acc/len(val_iter)
