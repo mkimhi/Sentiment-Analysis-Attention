@@ -16,10 +16,6 @@ class AttentionAnalyzer(nn.Module):
 
         #GRU as recurrent layer TODO: make this modular
         self.rnn = nn.GRU(embedding_dim, h_dim, num_layers=layers, bidirectional=bidirec, dropout=dropout)
-        
-        #We will use the implemented attention
-        #self.attn = AddAttention(2*h_dim, 2*h_dim, 2*h_dim, 2*h_dim)
-        
        
         #attention martices
         #self.att = nn.MultiheadAttention(embed_dim, num_heads, dropout=0.0, bias=True, add_bias_kv=False, add_zero_attn=False, kdim=None, vdim=None, batch_first=False, device=None, dtype=None)
