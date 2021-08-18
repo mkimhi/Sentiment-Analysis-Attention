@@ -5,7 +5,7 @@ from torch.nn import functional
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class SentimentAnalyzer(nn.Module):
-    def __init__(self, vocab_dim, embedding_dim, h_dim, out_dim, embedding_weights, layers=2, bidirec=True):
+    def __init__(self, vocab_dim, embedding_dim, h_dim, out_dim, embedding_weights, layers=2, bidirec=True, dropout=0.0):
         super().__init__()
         #embedding from index vector to euclidean based dense vector
         #require_grad set to false for embedding to be fixed and not trained
@@ -13,7 +13,7 @@ class SentimentAnalyzer(nn.Module):
         self.embd.weight = nn.Parameter(embedding_weights, requires_grad=False)
 
         #GRU as recurrent layer TODO: make this modular
-        self.rnn = nn.GRU(embedding_dim, h_dim, num_layers=layers, bidirectional=bidirec)
+        self.rnn = nn.GRU(embedding_dim, h_dim, num_layers=layers, bidirectional=bidirec, dropout=dropout)
         
         self.sentiment = nn.Linear(2*h_dim, out_dim)
         # To convert class scores to log-probability we will add log-softmax layer

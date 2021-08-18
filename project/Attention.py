@@ -7,7 +7,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 class AttentionAnalyzer(nn.Module):
-    def __init__(self, vocab_dim, embedding_dim, h_dim, out_dim, embedding_weights, layers=2, bidirec=True):
+    def __init__(self, vocab_dim, embedding_dim, h_dim, out_dim, embedding_weights, layers=2, bidirec=True, dropout=0.0):
         super().__init__()
         #embedding from index vector to euclidean based dense vector
         #require_grad set to false for embedding to be fixed and not trained
@@ -15,7 +15,7 @@ class AttentionAnalyzer(nn.Module):
         self.embd.weight = nn.Parameter(embedding_weights, requires_grad=False)
 
         #GRU as recurrent layer TODO: make this modular
-        self.rnn = nn.GRU(embedding_dim, h_dim, num_layers=layers, bidirectional=bidirec)
+        self.rnn = nn.GRU(embedding_dim, h_dim, num_layers=layers, bidirectional=bidirec, dropout=dropout)
         
         #We will use the implemented attention
         #self.attn = AddAttention(2*h_dim, 2*h_dim, 2*h_dim, 2*h_dim)
@@ -24,6 +24,7 @@ class AttentionAnalyzer(nn.Module):
         #attention martices
         #self.att = nn.MultiheadAttention(embed_dim, num_heads, dropout=0.0, bias=True, add_bias_kv=False, add_zero_attn=False, kdim=None, vdim=None, batch_first=False, device=None, dtype=None)
         self.W_s1 = nn.Linear(2*h_dim, 350)
+        self.AttnDrop = nn.Dropout(dropout)
         self.W_s2 = nn.Linear(350, 30)
         
         self.sentiment = nn.Linear(30*2*h_dim, out_dim)
@@ -34,7 +35,9 @@ class AttentionAnalyzer(nn.Module):
         
         #self.init_parameters()
     def attention_net(self, lstm_output):
-        attn_weight_matrix = self.W_s2(torch.tanh(self.W_s1(lstm_output)))
+        z1 = torch.tanh(self.W_s1(lstm_output))
+        z1 = self.AttnDrop(z1)
+        attn_weight_matrix = self.W_s2(z1)
         attn_weight_matrix = attn_weight_matrix.permute(0, 2, 1)
         attn_weight_matrix = functional.softmax(attn_weight_matrix, dim=2)
 
