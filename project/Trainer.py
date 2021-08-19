@@ -39,8 +39,9 @@ def train_and_eval(model,train_iter, valid_iter, optimizer, loss_fn =nn.NLLLoss(
             num_correct += torch.sum(y_pred == y).float().item()
             total_samples+= len(train_batch) 
 
-        if verbose:      
-            print(f"Epoch #{epoch_idx}(Train), loss={total_loss /(len(train_iter)):.3f}, accuracy={num_correct /(total_samples):.3f}, elapsed={time.time()-start_time:.1f} sec")
+        train_loss = total_loss /len(train_iter)
+        train_acc = num_correct / total_samples
+        
         train_accur.append(num_correct /(total_samples))
         
         total_loss, num_correct = 0, 0
@@ -60,7 +61,7 @@ def train_and_eval(model,train_iter, valid_iter, optimizer, loss_fn =nn.NLLLoss(
                 total_samples+= len(train_batch)
         
         if verbose:
-            print(f"Epoch #{epoch_idx}(Test), accuracy={num_correct /(total_samples):.3f}, elapsed={time.time()-start_time:.1f} sec")
+            print(f"Epoch #{epoch_idx},train loss={train_loss:.3f},train accuracy={train_acc:.3f}, test accuracy={num_correct /(total_samples):.3f}, elapsed={time.time()-start_time:.1f} sec")
         test_accur.append(num_correct /(total_samples))
         
         if test_accur[-1] >= best_acc:

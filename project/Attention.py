@@ -25,6 +25,7 @@ class AttentionAnalyzer(nn.Module):
         self.W_s2 = nn.Linear(2*h_dim, 1)
         
         self.sentiment = nn.Linear(1*2*h_dim, out_dim)
+        self.DO = nn.Dropout(dropout)
         # To convert class scores to log-probability we will add log-softmax layer
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.H = h_dim
@@ -33,7 +34,7 @@ class AttentionAnalyzer(nn.Module):
         #self.init_parameters()
     def attention_net(self, lstm_output):
         z1 = torch.tanh(self.W_s1(lstm_output))
-        z1 = self.AttnDrop(z1)
+        #z1 = self.AttnDrop(z1)
         attn_weight_matrix = self.W_s2(z1)
         attn_weight_matrix = attn_weight_matrix.permute(0, 2, 1)
         attn_weight_matrix = functional.softmax(attn_weight_matrix, dim=2)
@@ -56,21 +57,15 @@ class AttentionAnalyzer(nn.Module):
         S = torch.tensor([X.shape[0]]).to(device)
         
         ht = None
-        #ct = torch.zeros(B,self.H).to(device) #cell state        
         yt, ht = self.rnn(embedded, ht)
-        #for xt in embedded:          # xt is (B, E) 
-        #    xt = xt.reshape(1,B,E)
-        #    yt, ht = self.rnn(xt, ht) # yt is (B, H_dim) #NOTE: we should use cell state for lstm (when using lstm)
-        # Class scores to log-probability
-        #yt = yt.reshape(B, yt.shape[-1])
         yt = yt.permute(1,0,2)
-        
+        #print(f'--------------------y: {yt.shape} h: {ht.shape}')
         attn_weight = self.attention_net(yt)
         yt = torch.bmm(attn_weight, yt)
         
         #yt.unsqueeze(0)
         yt = self.sentiment(yt.view(-1, yt.shape[1]*yt.shape[2])) #yt is (B,D_out)
-        
+        yt = self.DO(yt)
         yt_log_proba = self.log_softmax(yt)
         
         return yt_log_proba

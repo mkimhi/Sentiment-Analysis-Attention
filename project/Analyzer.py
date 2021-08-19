@@ -16,6 +16,7 @@ class SentimentAnalyzer(nn.Module):
         self.rnn = nn.GRU(embedding_dim, h_dim, num_layers=layers, bidirectional=bidirec, dropout=dropout)
         
         self.sentiment = nn.Linear(2*h_dim, out_dim)
+        self.DO = nn.Dropout(dropout)
         # To convert class scores to log-probability we will add log-softmax layer
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.H = h_dim
@@ -48,7 +49,7 @@ class SentimentAnalyzer(nn.Module):
         # Class scores to log-probability
         yt = yt[-1].reshape(B, yt.shape[-1])
         #yt.unsqueeze(0)
-        yt = self.sentiment(yt) #yt is (B,D_out)
+        yt = self.DO(self.sentiment(yt)) #yt is (B,D_out)
         
         yt_log_proba = self.log_softmax(yt)
         
