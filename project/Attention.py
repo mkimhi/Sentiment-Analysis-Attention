@@ -53,7 +53,7 @@ class AttentionAnalyzer(nn.Module):
         B = torch.tensor([embedded.shape[1]]).to(device)
         E = torch.tensor([embedded.shape[2]]).to(device)
         S = torch.tensor([X.shape[0]]).to(device)
-        # Loop over (batch of) tokens in the sentence(s)
+        
         ht = None
         #ct = torch.zeros(B,self.H).to(device) #cell state        
         yt, ht = self.rnn(embedded, ht)

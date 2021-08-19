@@ -1,3 +1,5 @@
+import numpy as np
+from sklearn import metrics
 import torch
 import time
 import torch.nn as nn
@@ -106,6 +108,7 @@ def present_accuracy(model, dataloader,classes=3,show=True):
                 confusion_matrix[l.item(), predicted[i].item()] += 1 
 
     model_accuracy = total_correct / total * 100
+    print("Test accuracy: {:.3f}%".format(model_accuracy))
     if show:
         if classes ==   2:
             labels = ('0','1')
@@ -113,7 +116,7 @@ def present_accuracy(model, dataloader,classes=3,show=True):
             labels = ('0','1','2')
         elif classes == 5:
             labels = ('0','1','2','3','4')
-        print("test accuracy: {:.3f}%".format(test_accuracy))
+        
         fig, ax = plt.subplots(1,1,figsize=(8,6))
         ax.matshow(confusion_matrix, aspect='auto', vmin=0, vmax=1000, cmap=plt.get_cmap('Blues'))
         plt.ylabel('Actual Category')
@@ -122,3 +125,16 @@ def present_accuracy(model, dataloader,classes=3,show=True):
         plt.xticks(range(OUTPUT_DIM), labels)
         plt.show()
     return model_accuracy
+
+def print_stats(model, dataloader,classes=3):
+    model.eval() # put in evaluation mode
+    trues = []
+    preds = []
+    with torch.no_grad():
+        for data in dataloader:
+            X, y = data.text.cuda(), data.label.cuda()
+            trues+=list(y.cpu())
+            y_pred_log_proba = model(X)
+            predicted = torch.argmax(y_pred_log_proba, dim=1)
+            preds+= list(predicted.cpu())            
+    print(metrics.classification_report(trues, preds, digits=classes))
