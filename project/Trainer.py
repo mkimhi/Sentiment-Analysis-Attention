@@ -3,6 +3,7 @@ from sklearn import metrics
 import torch
 import time
 import torch.nn as nn
+import matplotlib.pyplot as plt
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def train_and_eval(model,train_iter, valid_iter, optimizer, loss_fn =nn.NLLLoss() , epochs=20,dir='project/Models/',name='RNN',data_name = 'SST3', verbose=True):
@@ -75,8 +76,8 @@ def train_and_eval(model,train_iter, valid_iter, optimizer, loss_fn =nn.NLLLoss(
             save_checkpoint = False
                
 
-    #saved_state = torch.load(checkpoint_filename, map_location=device)
-    #model.load_state_dict(saved_state['model_state'])
+    saved_state = torch.load(checkpoint_filename, map_location=device)
+    model.load_state_dict(saved_state['model_state'])
     
     return train_accur, test_accur
     #return total_epoch_loss/len(val_iter), total_epoch_acc/len(val_iter)
@@ -120,9 +121,9 @@ def present_accuracy(model, dataloader,classes=3,show=True):
         fig, ax = plt.subplots(1,1,figsize=(8,6))
         ax.matshow(confusion_matrix, aspect='auto', vmin=0, vmax=1000, cmap=plt.get_cmap('Blues'))
         plt.ylabel('Actual Category')
-        plt.yticks(range(OUTPUT_DIM), labels)
+        plt.yticks(range(classes), labels)
         plt.xlabel('Predicted Category')
-        plt.xticks(range(OUTPUT_DIM), labels)
+        plt.xticks(range(classes), labels)
         plt.show()
     return model_accuracy
 

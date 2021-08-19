@@ -19,11 +19,12 @@ class AttentionAnalyzer(nn.Module):
        
         #attention martices
         #self.att = nn.MultiheadAttention(embed_dim, num_heads, dropout=0.0, bias=True, add_bias_kv=False, add_zero_attn=False, kdim=None, vdim=None, batch_first=False, device=None, dtype=None)
-        self.W_s1 = nn.Linear(2*h_dim, 350)
+        #Changed now attention preserves the dimension of the model, previously it was from 2*h_dim to 350 and from there two 30
+        self.W_s1 = nn.Linear(2*h_dim, 2*h_dim)
         self.AttnDrop = nn.Dropout(dropout)
-        self.W_s2 = nn.Linear(350, 30)
+        self.W_s2 = nn.Linear(2*h_dim, 1)
         
-        self.sentiment = nn.Linear(30*2*h_dim, out_dim)
+        self.sentiment = nn.Linear(1*2*h_dim, out_dim)
         # To convert class scores to log-probability we will add log-softmax layer
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.H = h_dim
