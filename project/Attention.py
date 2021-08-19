@@ -63,7 +63,6 @@ class AttentionAnalyzer(nn.Module):
         #print(f'--------------------y: {yt.shape} h: {ht.shape}')
         attn_weight = self.attention_net(yt)
         yt = torch.bmm(attn_weight, yt)
-        print(yt.shape)
         #yt.unsqueeze(0)
         yt = self.sentiment(yt.view(-1, yt.shape[1]*yt.shape[2])) #yt is (B,D_out)
         
