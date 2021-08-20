@@ -10,6 +10,8 @@ def train_and_eval(model,train_iter, valid_iter, optimizer, loss_fn =nn.NLLLoss(
     checkpoint_filename = dir+ data_name+'_' +name+'.pt'
     train_accur = []
     test_accur = []
+    train_losses = []
+    test_losses = []
     best_acc = 0 #for best model
     save_checkpoint = False
     #TRAIN!!!!
@@ -61,14 +63,15 @@ def train_and_eval(model,train_iter, valid_iter, optimizer, loss_fn =nn.NLLLoss(
                 total_samples+= len(train_batch)
         
         if verbose:
-            print(f"Epoch #{epoch_idx},train loss={train_loss:.3f},train accuracy={train_acc:.3f}, test accuracy={num_correct /(total_samples):.3f}, elapsed={time.time()-start_time:.1f} sec")
+            print(f"Epoch #{epoch_idx},train loss={train_loss:.3f},train accuracy={train_acc:.3f}, validation accuracy={num_correct /(total_samples):.3f}, elapsed={time.time()-start_time:.1f} sec")
         test_accur.append(num_correct /(total_samples))
         
         if test_accur[-1] >= best_acc:
             save_checkpoint = True
             best_acc = test_accur[-1]
         
-        
+        train_losses.append(train_loss)
+        test_losses.append(num_correct /(total_samples))
         if save_checkpoint and checkpoint_filename is not None:
             saved_state = dict(best_acc=best_acc,model_state=model.state_dict())
             torch.save(saved_state, checkpoint_filename)
@@ -80,8 +83,7 @@ def train_and_eval(model,train_iter, valid_iter, optimizer, loss_fn =nn.NLLLoss(
     saved_state = torch.load(checkpoint_filename, map_location=device)
     model.load_state_dict(saved_state['model_state'])
     
-    return train_accur, test_accur
-    #return total_epoch_loss/len(val_iter), total_epoch_acc/len(val_iter)
+    return train_accur, test_accur,train_losses,test_losses
         
         
         
