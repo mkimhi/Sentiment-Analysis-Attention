@@ -11,5 +11,5 @@ This allows a good comparison over perfomance with noticable improvements for th
 Another performance comparison was about the confusion of the different models, trying to visualize differences<br/>
 between the performances of different models for different classes and with different statistical properties.<br/><br/>
 
-The models results can be viewed in Project.ipynb, and the hyperparameters search results can be viewed in  Hyper_Parameters.ipynb.
+The models results can be viewed in Project.ipynb, and the hyperparameters search results can be viewed in  Hyper_Parameters.ipynb.<br/>
 The models code can be found under the project/ folder
