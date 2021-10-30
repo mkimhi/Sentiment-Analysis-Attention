@@ -1,25 +1,15 @@
-# CS236781: Deep Learning on Computational Accelerators
-# Homework Assignment 4
+# Sentiment Analysis using Reccurent Neural Networks and Attention
 
-Faculty of Computer Science, Technion.
+In this project, there is a comparison of classic RNN model with the task of sentiment analysis, <br/>
+and RNN supplemented with Multihead attention.<br/>
 
-## Introduction
+In addition, there is an examination of different RNN based architectures and different hyper-parameters<br/>
+for different sentiment analysis based tasks, and performance comparison.<br/>
+The two datasets used for the task are Stanford Sentiment Treebank for 3 and 5 sentiment classes (SST-5 is 'fine grained' when regarding sentiment labeling).<br/>
+The two datasets are considered difficult where SST-5 has State of the art performance of ~50% accuracy, and SST-3 with ~70%.<br/>
+This allows a good comparison over perfomance with noticable improvements for the attention based model.<br/>
+Another performance comparison was about the confusion of the different models, trying to visualize differences<br/>
+between the performances of different models for different classes and with different statistical properties.<br/><br/>
 
-TODO
-
-
-## General Guidelines
-
-- Please read the [getting started page](https://vistalab-technion.github.io/cs236781/assignments/getting-started) on the course website. It explains how to **setup, run and submit** the assignment.
-- This assignment requires running on GPU-enabled hardware. Please read the [course servers usage guide](https://vistalab-technion.github.io/cs236781/assignments/hpc-servers). It explains how to use and run your code on the course servers to benefit from training with GPUs.
-- The text and code cells in these notebooks are intended to guide you through the
-  assignment and help you verify your solutions.
-  The notebooks **do not need to be edited** at all (unless you wish to play around).
-  The only exception is to fill your name(s) in the above cell before submission.
-  Please do not remove sections or change the order of any cells.
-- All your code (and even answers to questions) should be written in the files
-  within the python package corresponding the assignment number (`hw1`, `hw2`, etc).
-  You can of course use any editor or IDE to work on these files.
-
-## Contents
-TODO
+The models results can be viewed in Project.ipynb, and the hyperparameters search results can be viewed in  Hyper_Parameters.ipynb.<br/>
+The models code can be found under the project/ folder
