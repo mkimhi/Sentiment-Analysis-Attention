@@ -1,10 +1,6 @@
 #!/bin/bash
 
-###
-# CS236781: Deep Learning
-# jupyter-lab.sh
-#
-# This script is intended to help you run jupyter lab on the course servers.
+
 #
 # Example usage:
 #
